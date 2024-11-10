@@ -1,0 +1,189 @@
+<html>
+<head>
+    <title>Araba Yarış Oyunu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"></link>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+        }
+        .road {
+            position: relative;
+            width: 300px;
+            height: 600px;
+            margin: 0 auto;
+            background-color: #333;
+            overflow: hidden;
+        }
+        .lane {
+            position: absolute;
+            width: 100px;
+            height: 100%;
+            border-left: 2px dashed #fff;
+            border-right: 2px dashed #fff;
+        }
+        .lane:nth-child(1) {
+            left: 0;
+        }
+        .lane:nth-child(2) {
+            left: 100px;
+        }
+        .lane:nth-child(3) {
+            left: 200px;
+        }
+        .car, .obstacle, .coin {
+            position: absolute;
+            width: 80px;
+            height: 160px;
+        }
+        .car {
+            bottom: 20px;
+            left: 110px;
+            background: url('https://placehold.co/80x160?text=Senin+Aracın&bg=blue&color=pink') no-repeat center center;
+            background-size: cover;
+            clip-path: polygon(20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%, 0% 20%);
+        }
+        .obstacle {
+            background: url('https://placehold.co/80x160?text=Obstacle+Car&bg=red&color=white') no-repeat center center;
+            background-size: cover;
+            clip-path: polygon(20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%, 0% 20%);
+        }
+        .coin {
+            width: 40px;
+            height: 40px;
+            background: url('https://placehold.co/40x40?text=Coin&bg=yellow&color=black') no-repeat center center;
+            background-size: cover;
+            border-radius: 50%;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-800 text-white flex flex-col items-center justify-center min-h-screen">
+    <div class="road">
+        <div class="lane"></div>
+        <div class="lane"></div>
+        <div class="lane"></div>
+        <div class="car"></div>
+        <div class="obstacle hidden"></div>
+        <div class="coin hidden"></div>
+    </div>
+    <div class="absolute top-4 right-4">
+        <p id="coin-count" class="text-xl">Toplanan Coin: 0</p>
+    </div>
+    <div class="mt-4">
+        <p id="message" class="text-xl"></p>
+        <button id="restart" class="hidden mt-4 px-4 py-2 bg-blue-500 text-white rounded">Yeniden Oyna</button>
+        <p id="credits" class="hidden mt-4 text-sm">Çınar tarafından yapıldı</p>
+    </div>
+    <script>
+        const car = document.querySelector('.car');
+        const obstacle = document.querySelector('.obstacle');
+        const coin = document.querySelector('.coin');
+        const message = document.getElementById('message');
+        const restartButton = document.getElementById('restart');
+        const credits = document.getElementById('credits');
+        const coinCount = document.getElementById('coin-count');
+        let score = 0;
+        let gameOver = false;
+
+        document.addEventListener('keydown', (e) => {
+            if (gameOver) return;
+            if (e.key === 'ArrowLeft' && car.offsetLeft > 10) {
+                car.style.left = `${car.offsetLeft - 100}px`;
+            } else if (e.key === 'ArrowRight' && car.offsetLeft < 210) {
+                car.style.left = `${car.offsetLeft + 100}px`;
+            }
+        });
+
+        function startGame() {
+            score = 0;
+            gameOver = false;
+            message.textContent = '';
+            coinCount.textContent = 'Toplanan Coin: 0';
+            restartButton.classList.add('hidden');
+            credits.classList.add('hidden');
+            obstacle.classList.remove('hidden');
+            coin.classList.remove('hidden');
+            moveObstacle();
+            moveCoin();
+        }
+
+        function moveObstacle() {
+            if (gameOver) return;
+            let obstacleLane = Math.floor(Math.random() * 3) * 100;
+            obstacle.style.left = `${obstacleLane + 10}px`;
+            obstacle.style.top = '0px';
+            let obstacleInterval = setInterval(() => {
+                if (gameOver) {
+                    clearInterval(obstacleInterval);
+                    return;
+                }
+                obstacle.style.top = `${obstacle.offsetTop + 5}px`;
+                if (obstacle.offsetTop > 600) {
+                    clearInterval(obstacleInterval);
+                    moveObstacle();
+                }
+                if (checkCollision(car, obstacle)) {
+                    gameOver = true;
+                    message.textContent = 'Seni ezik! Buraya kaza yapmak için mi geldin?';
+                    restartButton.classList.remove('hidden');
+                    credits.classList.remove('hidden');
+                    clearInterval(obstacleInterval);
+                }
+            }, 20);
+        }
+
+        function moveCoin() {
+            if (gameOver) return;
+            let coinLane;
+            do {
+                coinLane = Math.floor(Math.random() * 3) * 100;
+            } while (coinLane === car.offsetLeft);
+            coin.style.left = `${coinLane + 30}px`;
+            coin.style.top = '0px';
+            let coinInterval = setInterval(() => {
+                if (gameOver) {
+                    clearInterval(coinInterval);
+                    return;
+                }
+                coin.style.top = `${coin.offsetTop + 5}px`;
+                if (coin.offsetTop > 600) {
+                    clearInterval(coinInterval);
+                    moveCoin();
+                }
+                if (checkCollision(car, coin)) {
+                    score++;
+                    coinCount.textContent = `Toplanan Coin: ${score}`;
+                    if (score >= 10) {
+                        gameOver = true;
+                        message.textContent = 'Aferin! Kazandın!';
+                        restartButton.classList.remove('hidden');
+                        credits.classList.remove('hidden');
+                        clearInterval(coinInterval);
+                    } else {
+                        clearInterval(coinInterval);
+                        moveCoin();
+                    }
+                }
+            }, 20);
+        }
+
+        function checkCollision(car, item) {
+            const carRect = car.getBoundingClientRect();
+            const itemRect = item.getBoundingClientRect();
+            return !(
+                carRect.top > itemRect.bottom ||
+                carRect.bottom < itemRect.top ||
+                carRect.right < itemRect.left ||
+                carRect.left > itemRect.right
+            );
+        }
+
+        restartButton.addEventListener('click', startGame);
+
+        startGame();
+    </script>
+</body>
+</html>
