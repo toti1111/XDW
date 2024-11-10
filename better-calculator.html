@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hesap Makinesi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+        .calculator {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            width: 300px;
+        }
+        .display {
+            width: 100%;
+            height: 50px;
+            background-color: #333;
+            color: #fff;
+            text-align: right;
+            font-size: 2em;
+            padding: 10px;
+            box-sizing: border-box;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-gap: 10px;
+        }
+        button {
+            padding: 20px;
+            font-size: 1.5em;
+            border: none;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            color: #333;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #ddd;
+        }
+        button.operation {
+            background-color: #ff9500;
+            color: white;
+        }
+        button.operation:hover {
+            background-color: #e08900;
+        }
+        button.equal {
+            background-color: #007aff;
+            color: white;
+        }
+        button.equal:hover {
+            background-color: #005bb5;
+        }
+        .history {
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .history-item {
+            padding: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .history-item:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator">
+    <div class="display" id="display">0</div>
+    <div class="buttons">
+        <button onclick="clearDisplay()">C</button>
+        <button onclick="deleteLast()">⌫</button>
+        <button onclick="appendToDisplay('%')">%</button>
+        <button class="operation" onclick="appendToDisplay('/')">÷</button>
+        
+        <button onclick="appendToDisplay('7')">7</button>
+        <button onclick="appendToDisplay('8')">8</button>
+        <button onclick="appendToDisplay('9')">9</button>
+        <button class="operation" onclick="appendToDisplay('*')">×</button>
+        
+        <button onclick="appendToDisplay('4')">4</button>
+        <button onclick="appendToDisplay('5')">5</button>
+        <button onclick="appendToDisplay('6')">6</button>
+        <button class="operation" onclick="appendToDisplay('-')">−</button>
+        
+        <button onclick="appendToDisplay('1')">1</button>
+        <button onclick="appendToDisplay('2')">2</button>
+        <button onclick="appendToDisplay('3')">3</button>
+        <button class="operation" onclick="appendToDisplay('+')">+</button>
+        
+        <button onclick="appendToDisplay('0')">0</button>
+        <button onclick="appendToDisplay('.')">.</button>
+        <button class="equal" onclick="calculate()">=</button>
+    </div>
+    
+    <div class="history" id="history">
+        <h3>Geçmiş</h3>
+        <!-- Geçmiş burada listelenecek -->
+    </div>
+</div>
+
+<script>
+    let display = document.getElementById('display');
+    let history = document.getElementById('history');
+    let currentInput = '';
+    let calculationHistory = [];
+
+    function appendToDisplay(value) {
+        if (currentInput === '0' && value !== '.') {
+            currentInput = '';
+        }
+        currentInput += value;
+        display.innerText = currentInput;
+    }
+
+    function clearDisplay() {
+        currentInput = '0';
+        display.innerText = currentInput;
+    }
+
+    function deleteLast() {
+        if (currentInput.length > 1) {
+            currentInput = currentInput.slice(0, -1);
+        } else {
+            currentInput = '0';
+        }
+        display.innerText = currentInput;
+    }
+
+    function calculate() {
+        try {
+            // Burada işlem sonuçlarını ve kullanılan sayıları kaydediyoruz
+            let result = eval(currentInput);
+            let expression = currentInput.replace(/\*/g, '×').replace(/\//g, '÷'); // Çarpma ve bölmeyi görsel olarak değiştirelim
+            currentInput = result.toString();
+            display.innerText = currentInput;
+            addHistory(expression + ' = ' + currentInput);  // Hesaplama işlemi ile sonucu geçmişe ekleyelim
+        } catch {
+            display.innerText = 'Error';
+            currentInput = '';
+        }
+    }
+
+    function addHistory(expression) {
+        // Hesaplama işlemi ve sonucu geçmişe ekleniyor
+        let historyItem = document.createElement('div');
+        historyItem.classList.add('history-item');
+        historyItem.textContent = expression;
+        historyItem.onclick = function() {
+            display.innerText = expression.split('=')[1].trim();  // Tıklanan hesaplamayı ekrana getir
+            currentInput = expression.split('=')[1].trim();
+        };
+
+        calculationHistory.push(expression);
+        history.appendChild(historyItem);
+
+        // Geçmişteki öğelerin sayısını kontrol et ve fazla öğeleri sil
+        if (calculationHistory.length > 5) {
+            history.removeChild(history.firstChild);
+            calculationHistory.shift();
+        }
+    }
+
+    clearDisplay();  // Başlangıçta ekranda '0' göstermek için
+</script>
+
+</body>
+</html>
